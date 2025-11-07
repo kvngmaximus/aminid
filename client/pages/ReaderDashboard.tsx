@@ -7,6 +7,7 @@ import ArticleCard from "@/components/ArticleCard";
 import Button from "@/components/Button";
 
 export default function ReaderDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"saved" | "subscriptions" | "history">("saved");
 
   const savedArticles = [
