@@ -62,6 +62,7 @@ const allAuthors = [
 type SortType = "followers" | "recent" | "trending";
 
 export default function Authors() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortType>("followers");
   const [filterPremium, setFilterPremium] = useState(false);
