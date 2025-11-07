@@ -8,6 +8,9 @@ import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ReaderDashboard from "./pages/ReaderDashboard";
+import AuthorDashboard from "./pages/AuthorDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 export default function App() {
@@ -23,6 +26,9 @@ export default function App() {
         <Route path="/courses/:id" element={<CourseDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard/reader" element={<ReaderDashboard />} />
+        <Route path="/dashboard/author" element={<AuthorDashboard />} />
+        <Route path="/dashboard/admin" element={<AdminDashboard />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
