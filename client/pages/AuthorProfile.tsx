@@ -119,9 +119,11 @@ export default function AuthorProfile() {
             <h2 className="font-poppins font-bold text-3xl text-foreground mb-8">Featured Articles</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {author.articles.map((article: any) => (
-                <Link key={article.id} to={`/articles/${article.id}`}>
-                  <ArticleCard {...article} />
-                </Link>
+                <ArticleCard
+                  key={article.id}
+                  {...article}
+                  onClick={() => navigate(`/articles/${article.id}`)}
+                />
               ))}
             </div>
           </div>
