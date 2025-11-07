@@ -156,9 +156,11 @@ export default function Articles() {
             {filteredArticles.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredArticles.map((article) => (
-                  <Link key={article.id} to={`/articles/${article.id}`}>
-                    <ArticleCard {...article} />
-                  </Link>
+                  <ArticleCard
+                    key={article.id}
+                    {...article}
+                    onClick={() => navigate(`/articles/${article.id}`)}
+                  />
                 ))}
               </div>
             ) : (
