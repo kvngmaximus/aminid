@@ -10,6 +10,7 @@ import Input from "@/components/Input";
 import Badge from "@/components/Badge";
 
 export default function Index() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
 
   const featuredArticles = [
