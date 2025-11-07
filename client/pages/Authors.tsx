@@ -143,7 +143,11 @@ export default function Authors() {
             {filteredAuthors.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredAuthors.map((author) => (
-                  <AuthorCard key={author.id} {...author} />
+                  <AuthorCard
+                    key={author.id}
+                    {...author}
+                    onClick={() => navigate(`/authors/${author.id}`)}
+                  />
                 ))}
               </div>
             ) : (
