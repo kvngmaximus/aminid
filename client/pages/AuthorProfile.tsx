@@ -38,6 +38,7 @@ const authorData: Record<string, any> = {
 };
 
 export default function AuthorProfile() {
+  const navigate = useNavigate();
   const { id = "a1" } = useParams();
   const [isFollowing, setIsFollowing] = useState(false);
 
