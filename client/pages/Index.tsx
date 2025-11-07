@@ -235,7 +235,7 @@ export default function Index() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {premiumArticles.map((article) => (
               <div key={article.id} className="animate-fade-in-up">
-                <ArticleCard {...article} />
+                <ArticleCard {...article} onClick={() => navigate(`/articles/${article.id}`)} />
               </div>
             ))}
           </div>
