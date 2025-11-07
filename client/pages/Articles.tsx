@@ -70,6 +70,7 @@ const allArticles = [
 type FilterType = "all" | "free" | "premium" | "popular";
 
 export default function Articles() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
