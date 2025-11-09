@@ -24,7 +24,6 @@ export default function App() {
         <Route path="/authors/:id" element={<AuthorProfile />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/courses/:id" element={<CourseDetail />} />
-        <Route path="/my-courses" element={<MyCourses />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard/reader" element={<ReaderDashboard />} />
