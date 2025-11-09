@@ -6,6 +6,12 @@ import Footer from "@/components/Footer";
 import Button from "@/components/Button";
 import Textarea from "@/components/Textarea";
 
+interface ContentBlock {
+  id: string;
+  type: "paragraph" | "image";
+  content: string;
+}
+
 const articleData: Record<string, any> = {
   "1": {
     id: "1",
@@ -15,13 +21,43 @@ const articleData: Record<string, any> = {
     authorBio: "Productivity expert and bestselling author",
     followers: 15420,
     image: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&h=600&fit=crop",
-    content: `Deep work is the ability to focus without distraction on cognitively demanding tasks. In today's world, this skill has become increasingly rare and valuable.
-
-The challenge we face is that our environment has transformed in ways that make deep work harder than ever. Our devices are constantly pinging with notifications, our email inboxes are overflowing, and social media is engineered to capture and hold our attention.
-
-Yet the ability to do deep work is what separates the exceptional performers from the merely competent. Whether you're a writer, programmer, designer, or scholar, your ability to concentrate is directly tied to the quality of your output.
-
-This article explores practical strategies for reclaiming your focus and cultivating deep work in a distracted world.`,
+    contentBlocks: [
+      {
+        id: "1",
+        type: "paragraph",
+        content: "Deep work is the ability to focus without distraction on cognitively demanding tasks. In today's world, this skill has become increasingly rare and valuable."
+      },
+      {
+        id: "2",
+        type: "image",
+        content: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop"
+      },
+      {
+        id: "3",
+        type: "paragraph",
+        content: "The challenge we face is that our environment has transformed in ways that make deep work harder than ever. Our devices are constantly pinging with notifications, our email inboxes are overflowing, and social media is engineered to capture and hold our attention."
+      },
+      {
+        id: "4",
+        type: "image",
+        content: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop"
+      },
+      {
+        id: "5",
+        type: "paragraph",
+        content: "Yet the ability to do deep work is what separates the exceptional performers from the merely competent. Whether you're a writer, programmer, designer, or scholar, your ability to concentrate is directly tied to the quality of your output."
+      },
+      {
+        id: "6",
+        type: "image",
+        content: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=400&fit=crop"
+      },
+      {
+        id: "7",
+        type: "paragraph",
+        content: "This article explores practical strategies for reclaiming your focus and cultivating deep work in a distracted world. Through a combination of environmental design, behavioral habits, and mindset shifts, you can create the conditions for your best work."
+      }
+    ],
     category: "Productivity",
     readTime: 8,
     likes: 234,
@@ -82,11 +118,32 @@ export default function ArticleDetail() {
           <img src={article.image} alt={article.title} className="w-full h-96 object-cover rounded-2xl mb-12" />
 
           <div className="prose prose-lg max-w-none mb-12">
-            {article.content.split("\n\n").map((para: string, idx: number) => (
-              <p key={idx} className="text-foreground text-lg leading-relaxed mb-6">
-                {para}
-              </p>
-            ))}
+            {article.contentBlocks && article.contentBlocks.length > 0 ? (
+              article.contentBlocks.map((block: ContentBlock) => (
+                <div key={block.id}>
+                  {block.type === "paragraph" && (
+                    <p className="text-foreground text-lg leading-relaxed mb-6">
+                      {block.content}
+                    </p>
+                  )}
+                  {block.type === "image" && block.content && (
+                    <div className="my-8">
+                      <img 
+                        src={block.content} 
+                        alt="Article content" 
+                        className="w-full h-96 object-cover rounded-2xl"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              article.content && article.content.split("\n\n").map((para: string, idx: number) => (
+                <p key={idx} className="text-foreground text-lg leading-relaxed mb-6">
+                  {para}
+                </p>
+              ))
+            )}
           </div>
 
           <div className="flex flex-wrap gap-4 mb-12 pb-12 border-b border-border">
