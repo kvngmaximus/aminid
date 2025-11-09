@@ -14,9 +14,10 @@ interface ArticlePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (article: any) => void;
+  editingArticle?: any;
 }
 
-export default function ArticlePostModal({ isOpen, onClose, onSubmit }: ArticlePostModalProps) {
+export default function ArticlePostModal({ isOpen, onClose, onSubmit, editingArticle }: ArticlePostModalProps) {
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [category, setCategory] = useState("");
@@ -26,6 +27,27 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit }: ArticleP
   ]);
   const [coverImage, setCoverImage] = useState("");
   const [coverImageInputType, setCoverImageInputType] = useState<"url" | "file">("url");
+
+  // Initialize form with editing article data when modal opens
+  React.useEffect(() => {
+    if (editingArticle) {
+      setTitle(editingArticle.title || "");
+      setExcerpt(editingArticle.excerpt || "");
+      setCategory(editingArticle.category || "");
+      setIsPremium(editingArticle.isPremium || false);
+      setCoverImage(editingArticle.coverImage || "");
+      setContentBlocks(editingArticle.contentBlocks || [{ id: "1", type: "paragraph", content: "" }]);
+      setCoverImageInputType("url");
+    } else {
+      // Reset form for create mode
+      setTitle("");
+      setExcerpt("");
+      setCategory("");
+      setIsPremium(false);
+      setCoverImage("");
+      setContentBlocks([{ id: "1", type: "paragraph", content: "" }]);
+    }
+  }, [editingArticle, isOpen]);
 
   const addContentBlock = (type: "paragraph" | "image") => {
     const newBlock: ContentBlock = {
