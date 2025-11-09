@@ -21,7 +21,7 @@ export default function Navbar() {
             <Link to="/articles" className="text-foreground hover:text-primary transition">Articles</Link>
             <Link to="/authors" className="text-foreground hover:text-primary transition">Authors</Link>
             <Link to="/courses" className="text-foreground hover:text-primary transition">Courses</Link>
-            <Link to="/dashboard/reader" className="text-foreground hover:text-primary transition">Dashboard</Link>
+            
           </div>
 
           <div className="hidden md:flex items-center gap-4">
