@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Upload } from "lucide-react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Textarea from "@/components/Textarea";
@@ -9,6 +9,7 @@ interface CourseModule {
   title: string;
   lessons: number;
   duration: number;
+  videoUrl: string;
 }
 
 interface CourseCreateModalProps {
@@ -24,8 +25,9 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
   const [duration, setDuration] = useState("");
   const [level, setLevel] = useState("Beginner");
   const [coverImage, setCoverImage] = useState("");
+  const [coverImageInputType, setCoverImageInputType] = useState<"url" | "file">("url");
   const [modules, setModules] = useState<CourseModule[]>([
-    { id: "1", title: "", lessons: 0, duration: 0 },
+    { id: "1", title: "", lessons: 0, duration: 0, videoUrl: "" },
   ]);
 
   const addModule = () => {
@@ -34,6 +36,7 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
       title: "",
       lessons: 0,
       duration: 0,
+      videoUrl: "",
     };
     setModules([...modules, newModule]);
   };
@@ -49,6 +52,28 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
   const deleteModule = (id: string) => {
     if (modules.length > 1) {
       setModules(modules.filter((module) => module.id !== id));
+    }
+  };
+
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCoverImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleVideoUpload = (moduleId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        updateModule(moduleId, "videoUrl", event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -90,7 +115,7 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
     setDuration("");
     setLevel("Beginner");
     setCoverImage("");
-    setModules([{ id: "1", title: "", lessons: 0, duration: 0 }]);
+    setModules([{ id: "1", title: "", lessons: 0, duration: 0, videoUrl: "" }]);
     onClose();
   };
 
@@ -111,14 +136,54 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-2">
-              Cover Image URL
+            <label className="block text-sm font-semibold text-foreground mb-3">
+              Cover Image
             </label>
-            <Input
-              placeholder="https://images.unsplash.com/..."
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-            />
+            <div className="flex gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => setCoverImageInputType("url")}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  coverImageInputType === "url"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-foreground"
+                }`}
+              >
+                Image URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoverImageInputType("file")}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  coverImageInputType === "file"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-foreground"
+                }`}
+              >
+                Upload File
+              </button>
+            </div>
+
+            {coverImageInputType === "url" ? (
+              <Input
+                placeholder="https://images.unsplash.com/..."
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+              />
+            ) : (
+              <label className="block border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary transition">
+                <Upload className="mx-auto mb-2 text-muted-foreground" size={32} />
+                <p className="text-sm font-semibold text-foreground">Click to upload cover image</p>
+                <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverImageUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
+
             {coverImage && (
               <img src={coverImage} alt="Cover preview" className="mt-4 w-full h-40 object-cover rounded-lg" />
             )}
@@ -194,9 +259,9 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
             <label className="block text-sm font-semibold text-foreground mb-4">
               Course Modules
             </label>
-            <div className="space-y-4">
+            <div className="space-y-6">
               {modules.map((module, idx) => (
-                <div key={module.id} className="space-y-2 p-4 bg-gray-50 rounded-lg">
+                <div key={module.id} className="space-y-3 p-4 bg-gray-50 rounded-lg border border-border">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-muted-foreground uppercase">
                       Module {idx + 1}
@@ -211,11 +276,13 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
                       </button>
                     )}
                   </div>
+                  
                   <Input
                     placeholder="Module title"
                     value={module.title}
                     onChange={(e) => updateModule(module.id, "title", e.target.value)}
                   />
+                  
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       type="number"
@@ -229,6 +296,46 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
                       value={module.duration}
                       onChange={(e) => updateModule(module.id, "duration", parseInt(e.target.value))}
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase mb-2">
+                      Module Video
+                    </label>
+                    <div className="space-y-2">
+                      <div className="flex gap-2 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.getElementById(`video-file-${module.id}`) as HTMLInputElement;
+                            input?.click();
+                          }}
+                          className="flex-1 px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition flex items-center justify-center gap-2"
+                        >
+                          <Upload size={14} />
+                          Upload Video
+                        </button>
+                        <span className="text-xs text-muted-foreground self-center">or</span>
+                      </div>
+                      <Input
+                        type="text"
+                        placeholder="Video URL (YouTube, Vimeo, etc.)"
+                        value={module.videoUrl}
+                        onChange={(e) => updateModule(module.id, "videoUrl", e.target.value)}
+                      />
+                      <input
+                        id={`video-file-${module.id}`}
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => handleVideoUpload(module.id, e)}
+                        className="hidden"
+                      />
+                      {module.videoUrl && (
+                        <div className="text-xs text-green-600 font-semibold">
+                          ✓ Video added
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
