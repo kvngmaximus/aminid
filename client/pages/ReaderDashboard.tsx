@@ -1,14 +1,29 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bookmark, Heart, Settings, LogOut, Download } from "lucide-react";
+import { Bookmark, Heart, Settings, LogOut, Download, Play, CheckCircle, Clock, BookOpen, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ArticleCard from "@/components/ArticleCard";
 import Button from "@/components/Button";
 
+interface EnrolledCourse {
+  id: string;
+  title: string;
+  author: string;
+  image: string;
+  price: number;
+  progress: number;
+  currentModule: number;
+  totalModules: number;
+  completedLessons: number;
+  totalLessons: number;
+  lastAccessed: string;
+  estimatedTimeLeft: number;
+}
+
 export default function ReaderDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"saved" | "subscriptions" | "history">("saved");
+  const [activeTab, setActiveTab] = useState<"saved" | "subscriptions" | "history" | "courses">("saved");
 
   const savedArticles = [
     {
