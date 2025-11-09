@@ -53,7 +53,7 @@ export default function Navbar() {
             <Link to="/articles" className="block py-2 text-foreground hover:text-primary">Articles</Link>
             <Link to="/authors" className="block py-2 text-foreground hover:text-primary">Authors</Link>
             <Link to="/courses" className="block py-2 text-foreground hover:text-primary">Courses</Link>
-            <Link to="/my-courses" className="block py-2 text-foreground hover:text-primary">My Courses</Link>
+            <Link to="/dashboard/reader" className="block py-2 text-foreground hover:text-primary">Dashboard</Link>
             <div className="flex gap-3 pt-3 border-t border-border">
               <Link to="/login" className="flex-1 py-2 text-center text-primary font-medium">Login</Link>
               <Link to="/signup" className="flex-1 py-2 text-center bg-gradient-btn text-white rounded-lg">Join</Link>
