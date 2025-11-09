@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Trash2, Upload } from "lucide-react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Textarea from "@/components/Textarea";
@@ -25,6 +25,7 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit }: ArticleP
     { id: "1", type: "paragraph", content: "" },
   ]);
   const [coverImage, setCoverImage] = useState("");
+  const [coverImageInputType, setCoverImageInputType] = useState<"url" | "file">("url");
 
   const addContentBlock = (type: "paragraph" | "image") => {
     const newBlock: ContentBlock = {
@@ -46,6 +47,28 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit }: ArticleP
   const deleteBlock = (id: string) => {
     if (contentBlocks.length > 1) {
       setContentBlocks(contentBlocks.filter((block) => block.id !== id));
+    }
+  };
+
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCoverImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageBlockUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        updateBlock(id, event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -97,14 +120,54 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit }: ArticleP
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
           <div>
-            <label className="block text-sm font-semibold text-foreground mb-2">
-              Cover Image URL
+            <label className="block text-sm font-semibold text-foreground mb-3">
+              Cover Image
             </label>
-            <Input
-              placeholder="https://images.unsplash.com/..."
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-            />
+            <div className="flex gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => setCoverImageInputType("url")}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  coverImageInputType === "url"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-foreground"
+                }`}
+              >
+                Image URL
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoverImageInputType("file")}
+                className={`px-4 py-2 rounded-lg font-medium transition ${
+                  coverImageInputType === "file"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-foreground"
+                }`}
+              >
+                Upload File
+              </button>
+            </div>
+
+            {coverImageInputType === "url" ? (
+              <Input
+                placeholder="https://images.unsplash.com/..."
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+              />
+            ) : (
+              <label className="block border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary transition">
+                <Upload className="mx-auto mb-2 text-muted-foreground" size={32} />
+                <p className="text-sm font-semibold text-foreground">Click to upload cover image</p>
+                <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 10MB</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverImageUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
+
             {coverImage && (
               <img src={coverImage} alt="Cover preview" className="mt-4 w-full h-40 object-cover rounded-lg" />
             )}
@@ -189,11 +252,34 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit }: ArticleP
                       className="resize-none"
                     />
                   ) : (
-                    <Input
-                      placeholder="Image URL"
-                      value={block.content}
-                      onChange={(e) => updateBlock(block.id, e.target.value)}
-                    />
+                    <div className="space-y-2">
+                      <div className="flex gap-2 mb-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.getElementById(`image-file-${block.id}`) as HTMLInputElement;
+                            input?.click();
+                          }}
+                          className="flex-1 px-3 py-2 bg-gray-100 text-foreground rounded-lg text-sm font-medium hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                        >
+                          <Upload size={16} />
+                          Upload Image
+                        </button>
+                        <span className="text-xs text-muted-foreground self-center">or</span>
+                      </div>
+                      <Input
+                        placeholder="Image URL"
+                        value={block.content}
+                        onChange={(e) => updateBlock(block.id, e.target.value)}
+                      />
+                      <input
+                        id={`image-file-${block.id}`}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageBlockUpload(block.id, e)}
+                        className="hidden"
+                      />
+                    </div>
                   )}
                   {block.type === "image" && block.content && (
                     <img src={block.content} alt="Content" className="w-full h-48 object-cover rounded-lg" />
