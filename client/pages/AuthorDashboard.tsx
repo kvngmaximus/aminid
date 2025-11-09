@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { Plus, Eye, Heart, TrendingUp, Settings, LogOut } from "lucide-react";
+import { Plus, Eye, Heart, TrendingUp, Settings, LogOut, Trash2, Edit2, BookOpen } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Button from "@/components/Button";
+import ArticlePostModal from "@/components/ArticlePostModal";
+import CourseCreateModal from "@/components/CourseCreateModal";
 
 export default function AuthorDashboard() {
-  const [activeTab, setActiveTab] = useState<"articles" | "analytics" | "earnings">("articles");
-
-  const articles = [
+  const [activeTab, setActiveTab] = useState<"articles" | "courses" | "analytics" | "earnings">("articles");
+  const [showArticleModal, setShowArticleModal] = useState(false);
+  const [showCourseModal, setShowCourseModal] = useState(false);
+  const [articles, setArticles] = useState([
     {
       id: "1",
       title: "The Art of Deep Work",
@@ -26,7 +29,19 @@ export default function AuthorDashboard() {
       date: "2024-01-20",
       premium: true,
     },
-  ];
+  ]);
+
+  const [courses, setCourses] = useState([
+    {
+      id: "1",
+      title: "Mastering Deep Work & Focus",
+      price: 49,
+      students: 2845,
+      rating: 4.8,
+      status: "published",
+      date: "2024-01-15",
+    },
+  ]);
 
   const analytics = [
     { metric: "Total Views", value: "2,450", change: "+15%" },
@@ -34,6 +49,22 @@ export default function AuthorDashboard() {
     { metric: "Average Read Time", value: "8.5 min", change: "+5%" },
     { metric: "Follower Growth", value: "+125", change: "This month" },
   ];
+
+  const handleAddArticle = (article: any) => {
+    setArticles([article, ...articles]);
+  };
+
+  const handleAddCourse = (course: any) => {
+    setCourses([course, ...courses]);
+  };
+
+  const handleDeleteArticle = (id: string) => {
+    setArticles(articles.filter(a => a.id !== id));
+  };
+
+  const handleDeleteCourse = (id: string) => {
+    setCourses(courses.filter(c => c.id !== id));
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -46,9 +77,13 @@ export default function AuthorDashboard() {
               Author Dashboard
             </h1>
             <div className="flex gap-3">
-              <Button>
+              <Button onClick={() => setShowArticleModal(true)}>
                 <Plus size={20} />
                 New Article
+              </Button>
+              <Button onClick={() => setShowCourseModal(true)} variant="secondary">
+                <Plus size={20} />
+                New Course
               </Button>
               <Button variant="ghost" size="md">
                 <Settings size={20} />
@@ -71,18 +106,19 @@ export default function AuthorDashboard() {
             ))}
           </div>
 
-          <div className="flex gap-4 mb-8 border-b border-border">
-            {["articles", "analytics", "earnings"].map((tab) => (
+          <div className="flex gap-4 mb-8 border-b border-border overflow-x-auto">
+            {["articles", "courses", "analytics", "earnings"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as typeof activeTab)}
-                className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
+                className={`px-6 py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === tab
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {tab === "articles" && "My Articles"}
+                {tab === "courses" && "My Courses"}
                 {tab === "analytics" && "Analytics"}
                 {tab === "earnings" && "Earnings"}
               </button>
@@ -91,38 +127,121 @@ export default function AuthorDashboard() {
 
           {activeTab === "articles" && (
             <div className="space-y-4">
-              {articles.map((article) => (
-                <div key={article.id} className="bg-white rounded-xl p-6 border border-border hover:shadow-lg transition flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-foreground">{article.title}</h3>
+              {articles.length === 0 ? (
+                <div className="bg-white rounded-xl p-12 border border-border text-center">
+                  <p className="text-muted-foreground text-lg mb-4">No articles yet</p>
+                  <Button onClick={() => setShowArticleModal(true)}>
+                    <Plus size={20} />
+                    Create Your First Article
+                  </Button>
+                </div>
+              ) : (
+                articles.map((article) => (
+                  <div key={article.id} className="bg-white rounded-xl p-6 border border-border hover:shadow-lg transition flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-foreground">{article.title}</h3>
+                        <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
+                          article.status === "published"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}>
+                          {article.status}
+                        </span>
+                        {article.premium && (
+                          <span className="text-xs bg-accent/10 text-accent px-3 py-1 rounded-full font-semibold">
+                            Premium
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{article.date}</p>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm text-muted-foreground mr-6">
+                      <div className="flex items-center gap-1">
+                        <Eye size={16} />
+                        <span>{article.views}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Heart size={16} />
+                        <span>{article.likes}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm">
+                        <Edit2 size={16} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeleteArticle(article.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {activeTab === "courses" && (
+            <div className="space-y-4">
+              {courses.length === 0 ? (
+                <div className="bg-white rounded-xl p-12 border border-border text-center">
+                  <p className="text-muted-foreground text-lg mb-4">No courses yet</p>
+                  <Button onClick={() => setShowCourseModal(true)}>
+                    <Plus size={20} />
+                    Create Your First Course
+                  </Button>
+                </div>
+              ) : (
+                courses.map((course) => (
+                  <div key={course.id} className="bg-white rounded-xl p-6 border border-border hover:shadow-lg transition flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <BookOpen size={20} className="text-primary" />
+                        <div>
+                          <h3 className="font-semibold text-foreground">{course.title}</h3>
+                          <p className="text-xs text-muted-foreground">{course.date}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-8 text-sm text-muted-foreground mr-6">
+                      <div className="flex items-center gap-1">
+                        <TrendingUp size={16} />
+                        <span>{course.students} enrolled</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-foreground">${course.price}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-accent font-semibold">{course.rating}★</span>
+                      </div>
                       <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                        article.status === "published"
+                        course.status === "published"
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-100 text-gray-700"
                       }`}>
-                        {article.status}
+                        {course.status}
                       </span>
-                      {article.premium && (
-                        <span className="text-xs bg-accent/10 text-accent px-3 py-1 rounded-full font-semibold">
-                          Premium
-                        </span>
-                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground">{article.date}</p>
-                  </div>
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Eye size={16} />
-                      <span>{article.views}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Heart size={16} />
-                      <span>{article.likes}</span>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm">
+                        <Edit2 size={16} />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeleteCourse(course.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
@@ -142,7 +261,7 @@ export default function AuthorDashboard() {
                     Top Articles
                   </h3>
                   <ul className="space-y-3">
-                    {articles.map((article) => (
+                    {articles.slice(0, 5).map((article) => (
                       <li key={article.id} className="flex items-center justify-between py-2 border-b border-border">
                         <span className="text-foreground">{article.title}</span>
                         <TrendingUp className="text-green-500" size={18} />
@@ -177,6 +296,18 @@ export default function AuthorDashboard() {
           )}
         </div>
       </div>
+
+      <ArticlePostModal
+        isOpen={showArticleModal}
+        onClose={() => setShowArticleModal(false)}
+        onSubmit={handleAddArticle}
+      />
+
+      <CourseCreateModal
+        isOpen={showCourseModal}
+        onClose={() => setShowCourseModal(false)}
+        onSubmit={handleAddCourse}
+      />
 
       <Footer />
     </div>
