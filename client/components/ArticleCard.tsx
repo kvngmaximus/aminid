@@ -13,6 +13,7 @@ interface ArticleCardProps {
   isFeatured?: boolean;
   category?: string;
   onClick?: () => void;
+  contentBlocks?: Array<{ type: "paragraph" | "image"; content: string }>;
 }
 
 export default function ArticleCard({
@@ -28,7 +29,12 @@ export default function ArticleCard({
   isFeatured = false,
   category,
   onClick,
+  contentBlocks,
 }: ArticleCardProps) {
+  // Get first inline image if contentBlocks exists
+  const firstInlineImage = contentBlocks?.find(block => block.type === "image")?.content;
+  const displayImage = firstInlineImage || image;
+
   return (
     <div
       className="bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer"
@@ -41,7 +47,7 @@ export default function ArticleCard({
     >
       <div className="relative overflow-hidden h-48 sm:h-56">
         <img
-          src={image}
+          src={displayImage}
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
