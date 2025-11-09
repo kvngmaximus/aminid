@@ -194,6 +194,119 @@ export default function ReaderDashboard() {
             </div>
           )}
 
+          {activeTab === "courses" && (
+            <div>
+              {activeCourses.length === 0 ? (
+                <div className="bg-white rounded-xl p-12 border border-border text-center">
+                  <BookOpen className="mx-auto mb-4 text-muted-foreground" size={48} />
+                  <p className="text-muted-foreground text-lg mb-4">No active courses</p>
+                  <Button onClick={() => navigate("/courses")}>
+                    Browse All Courses
+                    <ArrowRight size={16} />
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeCourses.map((course) => (
+                    <div key={course.id} className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-lg transition">
+                      <div className="relative overflow-hidden h-32">
+                        <img
+                          src={course.image}
+                          alt={course.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        <div className="absolute top-4 right-4">
+                          <div className="bg-white/90 px-3 py-1 rounded-full text-xs font-bold text-foreground">
+                            {course.progress}% Done
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-6">
+                        <h3 className="font-poppins font-bold text-lg text-foreground mb-2 line-clamp-2">
+                          {course.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">{course.author}</p>
+
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-foreground">
+                              {course.completedLessons} of {course.totalLessons} lessons completed
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              Module {course.currentModule}/{course.totalModules}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all"
+                              style={{ width: `${course.progress}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4 pb-4 border-b border-border">
+                          <div className="flex items-center gap-1">
+                            <Clock size={14} />
+                            <span>{course.estimatedTimeLeft}h remaining</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-400">•</span>
+                            <span>Last accessed {course.lastAccessed}</span>
+                          </div>
+                        </div>
+
+                        <Button
+                          onClick={() => handleContinueLearning(course.id)}
+                          className="w-full"
+                        >
+                          <Play size={16} />
+                          Continue Learning
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {completedCourses.length > 0 && (
+                <div className="mt-12">
+                  <h3 className="font-poppins font-bold text-2xl text-foreground mb-6">Completed Courses</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {completedCourses.map((course) => (
+                      <div key={course.id} className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-lg transition">
+                        <div className="relative overflow-hidden h-32">
+                          <img
+                            src={course.image}
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                          <div className="absolute top-4 right-4">
+                            <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                              <CheckCircle size={12} />
+                              Completed
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-6">
+                          <h3 className="font-poppins font-bold text-lg text-foreground mb-2">
+                            {course.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-4">{course.author}</p>
+                          <Button variant="outline" className="w-full">
+                            View Certificate
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === "history" && (
             <div className="bg-white rounded-xl p-8 text-center border border-border">
               <h3 className="font-poppins font-bold text-lg text-foreground mb-2">
