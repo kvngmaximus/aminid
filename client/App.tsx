@@ -6,6 +6,7 @@ import Authors from "./pages/Authors";
 import AuthorProfile from "./pages/AuthorProfile";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
+import MyCourses from "./pages/MyCourses";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ReaderDashboard from "./pages/ReaderDashboard";
