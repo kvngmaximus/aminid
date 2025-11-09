@@ -134,7 +134,7 @@ export default function ReaderDashboard() {
             {[
               { label: "Saved Articles", value: "12", icon: Bookmark },
               { label: "Subscribed Authors", value: "8", icon: Heart },
-              { label: "Total Read Time", value: "42h", icon: Settings },
+              { label: "Active Courses", value: activeCourses.length.toString(), icon: BookOpen },
               { label: "Premium Plan", value: "Active", icon: Settings },
             ].map((stat) => (
               <div key={stat.label} className="bg-white rounded-xl p-6 border border-border">
@@ -145,12 +145,12 @@ export default function ReaderDashboard() {
             ))}
           </div>
 
-          <div className="flex gap-4 mb-8 border-b border-border">
-            {["saved", "subscriptions", "history"].map((tab) => (
+          <div className="flex gap-4 mb-8 border-b border-border overflow-x-auto">
+            {["saved", "subscriptions", "courses", "history"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as typeof activeTab)}
-                className={`px-6 py-3 font-semibold transition-colors border-b-2 ${
+                className={`px-6 py-3 font-semibold transition-colors border-b-2 whitespace-nowrap ${
                   activeTab === tab
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
@@ -158,6 +158,7 @@ export default function ReaderDashboard() {
               >
                 {tab === "saved" && "Saved Articles"}
                 {tab === "subscriptions" && "Subscriptions"}
+                {tab === "courses" && "My Courses"}
                 {tab === "history" && "Reading History"}
               </button>
             ))}
