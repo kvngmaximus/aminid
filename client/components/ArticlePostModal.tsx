@@ -29,7 +29,7 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit, editingArt
   const [coverImageInputType, setCoverImageInputType] = useState<"url" | "file">("url");
 
   // Initialize form with editing article data when modal opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (editingArticle) {
       setTitle(editingArticle.title || "");
       setExcerpt(editingArticle.excerpt || "");
