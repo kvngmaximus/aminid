@@ -317,8 +317,12 @@ export default function AuthorDashboard() {
 
       <ArticlePostModal
         isOpen={showArticleModal}
-        onClose={() => setShowArticleModal(false)}
+        onClose={() => {
+          setShowArticleModal(false);
+          setEditingArticle(null);
+        }}
         onSubmit={handleAddArticle}
+        editingArticle={editingArticle}
       />
 
       <CourseCreateModal
