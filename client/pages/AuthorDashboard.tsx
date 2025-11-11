@@ -181,11 +181,15 @@ export default function AuthorDashboard() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditArticle(article)}
+                      >
                         <Edit2 size={16} />
                       </Button>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteArticle(article.id)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
