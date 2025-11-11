@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Plus, Trash2, Upload } from "lucide-react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
@@ -96,25 +96,27 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit, editingArt
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const article = {
-      id: Date.now().toString(),
+      id: editingArticle?.id || Date.now().toString(),
       title,
       excerpt,
       category,
       isPremium,
       coverImage: coverImage || "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1200&h=600&fit=crop",
       contentBlocks,
-      author: "Current Author",
-      authorImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
+      author: editingArticle?.author || "Current Author",
+      authorImage: editingArticle?.authorImage || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
       readTime: Math.ceil((contentBlocks.filter(b => b.type === "paragraph").reduce((acc, b) => acc + b.content.length, 0)) / 1000),
-      likes: 0,
-      status: "published",
-      publishedAt: new Date().toISOString().split("T")[0],
+      likes: editingArticle?.likes || 0,
+      views: editingArticle?.views || 0,
+      status: editingArticle?.status || "published",
+      publishedAt: editingArticle?.publishedAt || new Date().toISOString().split("T")[0],
+      date: editingArticle?.date || new Date().toISOString().split("T")[0],
     };
 
     onSubmit(article);
-    
+
     // Reset form
     setTitle("");
     setExcerpt("");
@@ -131,7 +133,9 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit, editingArt
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-2xl w-full mx-4 my-8">
         <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-white rounded-t-2xl">
-          <h2 className="font-poppins font-bold text-2xl text-foreground">Create Article</h2>
+          <h2 className="font-poppins font-bold text-2xl text-foreground">
+            {editingArticle ? "Edit Article" : "Create Article"}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
@@ -335,7 +339,7 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit, editingArt
               Cancel
             </Button>
             <Button type="submit" className="flex-1">
-              Publish Article
+              {editingArticle ? "Update Article" : "Publish Article"}
             </Button>
           </div>
         </form>
