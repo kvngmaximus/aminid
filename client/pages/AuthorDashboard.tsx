@@ -10,6 +10,7 @@ export default function AuthorDashboard() {
   const [activeTab, setActiveTab] = useState<"articles" | "courses" | "analytics" | "earnings">("articles");
   const [showArticleModal, setShowArticleModal] = useState(false);
   const [showCourseModal, setShowCourseModal] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<any>(null);
   const [articles, setArticles] = useState([
     {
       id: "1",
@@ -51,7 +52,20 @@ export default function AuthorDashboard() {
   ];
 
   const handleAddArticle = (article: any) => {
-    setArticles([article, ...articles]);
+    if (editingArticle) {
+      // Update existing article
+      setArticles(articles.map(a => a.id === article.id ? article : a));
+      setEditingArticle(null);
+    } else {
+      // Add new article
+      setArticles([article, ...articles]);
+    }
+    setShowArticleModal(false);
+  };
+
+  const handleEditArticle = (article: any) => {
+    setEditingArticle(article);
+    setShowArticleModal(true);
   };
 
   const handleAddCourse = (course: any) => {
