@@ -70,7 +70,20 @@ export default function AuthorDashboard() {
   };
 
   const handleAddCourse = (course: any) => {
-    setCourses([course, ...courses]);
+    if (editingCourse) {
+      // Update existing course
+      setCourses(courses.map(c => c.id === course.id ? course : c));
+      setEditingCourse(null);
+    } else {
+      // Add new course
+      setCourses([course, ...courses]);
+    }
+    setShowCourseModal(false);
+  };
+
+  const handleEditCourse = (course: any) => {
+    setEditingCourse(course);
+    setShowCourseModal(true);
   };
 
   const handleDeleteArticle = (id: string) => {
