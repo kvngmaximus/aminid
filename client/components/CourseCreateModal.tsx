@@ -150,7 +150,9 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-2xl w-full mx-4 my-8">
         <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-white rounded-t-2xl">
-          <h2 className="font-poppins font-bold text-2xl text-foreground">Create Course</h2>
+          <h2 className="font-poppins font-bold text-2xl text-foreground">
+            {editingCourse ? "Edit Course" : "Create Course"}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
