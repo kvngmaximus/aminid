@@ -345,8 +345,12 @@ export default function AuthorDashboard() {
 
       <CourseCreateModal
         isOpen={showCourseModal}
-        onClose={() => setShowCourseModal(false)}
+        onClose={() => {
+          setShowCourseModal(false);
+          setEditingCourse(null);
+        }}
         onSubmit={handleAddCourse}
+        editingCourse={editingCourse}
       />
 
       <Footer />
