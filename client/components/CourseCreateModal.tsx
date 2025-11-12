@@ -384,7 +384,7 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
               Cancel
             </Button>
             <Button type="submit" className="flex-1">
-              Create Course
+              {editingCourse ? "Update Course" : "Create Course"}
             </Button>
           </div>
         </form>
