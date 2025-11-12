@@ -11,6 +11,7 @@ export default function AuthorDashboard() {
   const [showArticleModal, setShowArticleModal] = useState(false);
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [editingArticle, setEditingArticle] = useState<any>(null);
+  const [editingCourse, setEditingCourse] = useState<any>(null);
   const [articles, setArticles] = useState([
     {
       id: "1",
