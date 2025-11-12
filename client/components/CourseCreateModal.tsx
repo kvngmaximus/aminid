@@ -16,9 +16,10 @@ interface CourseCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (course: any) => void;
+  editingCourse?: any;
 }
 
-export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseCreateModalProps) {
+export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCourse }: CourseCreateModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -29,6 +30,29 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit }: CourseC
   const [modules, setModules] = useState<CourseModule[]>([
     { id: "1", title: "", lessons: 0, duration: 0, videoUrl: "" },
   ]);
+
+  // Initialize form with editing course data when modal opens
+  useEffect(() => {
+    if (editingCourse) {
+      setTitle(editingCourse.title || "");
+      setDescription(editingCourse.description || editingCourse.fullDescription || "");
+      setPrice(editingCourse.price?.toString() || "");
+      setDuration(editingCourse.duration?.toString() || "");
+      setLevel(editingCourse.level || "Beginner");
+      setCoverImage(editingCourse.image || "");
+      setModules(editingCourse.modules || [{ id: "1", title: "", lessons: 0, duration: 0, videoUrl: "" }]);
+      setCoverImageInputType("url");
+    } else {
+      // Reset form for create mode
+      setTitle("");
+      setDescription("");
+      setPrice("");
+      setDuration("");
+      setLevel("Beginner");
+      setCoverImage("");
+      setModules([{ id: "1", title: "", lessons: 0, duration: 0, videoUrl: "" }]);
+    }
+  }, [editingCourse, isOpen]);
 
   const addModule = () => {
     const newModule: CourseModule = {
