@@ -105,7 +105,7 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
     e.preventDefault();
 
     const course = {
-      id: Date.now().toString(),
+      id: editingCourse?.id || Date.now().toString(),
       title,
       description,
       fullDescription: description,
@@ -114,12 +114,13 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
       level,
       image: coverImage || "https://images.unsplash.com/photo-1516321318423-f06f70a504f0?w=1200&h=600&fit=crop",
       modules: modules.filter(m => m.title.trim()),
-      author: "Current Author",
-      authorImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
-      authorBio: "Course instructor",
-      rating: 4.8,
-      students: 0,
-      status: "published",
+      author: editingCourse?.author || "Current Author",
+      authorImage: editingCourse?.authorImage || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
+      authorBio: editingCourse?.authorBio || "Course instructor",
+      rating: editingCourse?.rating || 4.8,
+      students: editingCourse?.students || 0,
+      status: editingCourse?.status || "published",
+      date: editingCourse?.date || new Date().toISOString().split("T")[0],
       features: [
         `${duration} hours of video content`,
         `${modules.length} modules`,
