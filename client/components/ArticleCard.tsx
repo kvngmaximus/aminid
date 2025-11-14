@@ -1,4 +1,5 @@
 import { Clock, Heart, Star } from "lucide-react";
+import SafeImage from "./SafeImage";
 
 interface ArticleCardProps {
   id: string;
@@ -46,7 +47,7 @@ export default function ArticleCard({
       }}
     >
       <div className="relative overflow-hidden h-48 sm:h-56">
-        <img
+        <SafeImage
           src={displayImage}
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -84,7 +85,7 @@ export default function ArticleCard({
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <img
+            <SafeImage
               src={authorImage}
               alt={author}
               className="w-6 h-6 rounded-full object-cover"

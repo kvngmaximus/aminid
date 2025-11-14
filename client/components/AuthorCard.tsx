@@ -1,5 +1,6 @@
 import { Star, Award } from "lucide-react";
 import Button from "./Button";
+import SafeImage from "./SafeImage";
 
 interface AuthorCardProps {
   id: string;
@@ -55,7 +56,7 @@ export default function AuthorCard({
       {badge && getBadge()}
 
       <div className="relative w-24 h-24 mx-auto mb-4">
-        <img
+        <SafeImage
           src={image}
           alt={name}
           className="w-full h-full rounded-full object-cover border-4 border-accent group-hover:border-primary transition-colors"
