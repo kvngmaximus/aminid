@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Eye, Heart, TrendingUp, Settings, LogOut, Trash2, Edit2, BookOpen } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Button from "@/components/Button";
 import ArticlePostModal from "@/components/ArticlePostModal";
 import CourseCreateModal from "@/components/CourseCreateModal";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 export default function AuthorDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"articles" | "courses" | "analytics" | "earnings">("articles");
   const [showArticleModal, setShowArticleModal] = useState(false);
   const [showCourseModal, setShowCourseModal] = useState(false);
@@ -44,6 +47,30 @@ export default function AuthorDashboard() {
       date: "2024-01-15",
     },
   ]);
+
+  useEffect(() => {
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+      const userId = session.user.id;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type,status")
+        .eq("id", userId)
+        .single();
+      if (!profile) return;
+      if (profile.status !== "active") {
+        navigate("/");
+        return;
+      }
+      if (profile.user_type === "reader") navigate("/dashboard/reader");
+      if (profile.user_type === "admin") navigate("/dashboard/admin");
+    })();
+  }, [navigate]);
 
   const analytics = [
     { metric: "Total Views", value: "2,450", change: "+15%" },
@@ -94,6 +121,11 @@ export default function AuthorDashboard() {
     setCourses(courses.filter(c => c.id !== id));
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut({ scope: "local" });
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -116,7 +148,7 @@ export default function AuthorDashboard() {
               <Button variant="ghost" size="md">
                 <Settings size={20} />
               </Button>
-              <Button variant="ghost" size="md">
+              <Button variant="ghost" size="md" onClick={handleLogout}>
                 <LogOut size={20} />
               </Button>
             </div>
@@ -353,7 +385,7 @@ export default function AuthorDashboard() {
         editingCourse={editingCourse}
       />
 
-      <Footer />
+  <Footer />
     </div>
   );
 }

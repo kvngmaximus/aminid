@@ -1,20 +1,25 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, BookOpen, PenTool } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
+import { supabase } from "@/lib/supabase";
 
 type Role = "reader" | "author";
 
 export default function Signup() {
+  const navigate = useNavigate();
   const [role, setRole] = useState<Role>("reader");
   const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setInfo(null);
     const newErrors: Record<string, string> = {};
 
     if (!formData.name) newErrors.name = "Name is required";
@@ -29,8 +34,41 @@ export default function Signup() {
       return;
     }
 
-    alert(`Account created as ${role} with email: ${formData.email}`);
-    setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: { role, name: formData.name },
+      },
+    });
+    setLoading(false);
+
+    if (error) {
+      setInfo(error.message);
+      return;
+    }
+
+    // If email confirmations are enabled, session may not be present.
+    if (!data.session) {
+      setInfo("Signup successful. Please check your email to confirm.");
+      setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+      return;
+    }
+
+    // Session exists → route by profile user_type
+    const user = data.user;
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type")
+        .eq("id", user.id)
+        .single();
+      const userType = (profile?.user_type as Role | "admin") ?? role;
+      if (userType === "author") navigate("/dashboard/author");
+      else if (userType === "admin") navigate("/dashboard/admin");
+      else navigate("/dashboard/reader");
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -117,10 +155,14 @@ export default function Signup() {
               </span>
             </label>
 
-            <Button type="submit" size="lg" className="w-full group">
-              Create Account <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
+            <Button type="submit" size="lg" className="w-full group" disabled={loading}>
+              {loading ? "Creating..." : "Create Account"} <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
             </Button>
           </form>
+
+          {info && (
+            <p className="text-center text-muted-foreground mt-4">{info}</p>
+          )}
 
           <p className="text-center text-muted-foreground mt-6">
             Already have an account?{" "}

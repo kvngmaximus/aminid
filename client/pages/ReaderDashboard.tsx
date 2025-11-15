@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bookmark, Heart, Settings, LogOut, Download, Play, CheckCircle, Clock, BookOpen, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ArticleCard from "@/components/ArticleCard";
 import Button from "@/components/Button";
+import { supabase } from "@/lib/supabase";
 
 interface EnrolledCourse {
   id: string;
@@ -24,6 +25,33 @@ interface EnrolledCourse {
 export default function ReaderDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"saved" | "subscriptions" | "history" | "courses">("saved");
+  const [guardMessage, setGuardMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+      if (!session) {
+        setGuardMessage("Please sign in to view your dashboard.");
+        navigate("/login");
+        return;
+      }
+      const userId = session.user.id;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type,status")
+        .eq("id", userId)
+        .single();
+      if (!profile) return;
+      if (profile.status !== "active") {
+        setGuardMessage(`Account ${profile.status}.`);
+        navigate("/");
+        return;
+      }
+      if (profile.user_type === "author") navigate("/dashboard/author");
+      if (profile.user_type === "admin") navigate("/dashboard/admin");
+    })();
+  }, [navigate]);
 
   const savedArticles = [
     {
@@ -110,6 +138,11 @@ export default function ReaderDashboard() {
     navigate(`/courses/${courseId}?tab=curriculum`);
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut({ scope: "local" });
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
@@ -124,7 +157,7 @@ export default function ReaderDashboard() {
               <Button variant="ghost" size="md">
                 <Settings size={20} />
               </Button>
-              <Button variant="ghost" size="md">
+              <Button variant="ghost" size="md" onClick={handleLogout}>
                 <LogOut size={20} />
               </Button>
             </div>
