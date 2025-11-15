@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Users, FileText, Award, CreditCard, Settings, LogOut, ChevronRight } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { Link } from "react-router-dom";
 import Button from "@/components/Button";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
@@ -61,25 +60,31 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+      {/* Dashboard Header */}
+      <div className="sticky top-0 z-20 bg-white border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="font-poppins font-bold text-foreground">Aminid</Link>
+            <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary font-semibold">Admin</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm">
+              <Settings size={18} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut size={18} />
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <div className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-12">
-            <h1 className="font-poppins font-bold text-4xl text-foreground">
-              Admin Control Panel
-            </h1>
-            <div className="flex gap-3">
-              <Button variant="ghost" size="md">
-                <Settings size={20} />
-              </Button>
-              <Button variant="ghost" size="md" onClick={handleLogout}>
-                <LogOut size={20} />
-              </Button>
-            </div>
+            <h1 className="font-poppins font-bold text-4xl text-foreground">Admin Control Panel</h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {stats.map((stat) => (
               <div key={stat.label} className="bg-white rounded-xl p-6 border border-border">
                 <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
@@ -91,7 +96,7 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {[
               { id: "users" as const, icon: Users, label: "User Management", count: 3 },
               { id: "articles" as const, icon: FileText, label: "Content Moderation", count: 2 },
@@ -251,7 +256,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <Footer />
     </div>
   );
 }

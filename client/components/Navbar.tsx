@@ -1,9 +1,51 @@
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [dashboardPath, setDashboardPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const resolveDashboard = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+      if (!session) {
+        if (mounted) setDashboardPath(null);
+        return;
+      }
+      const userId = session.user.id;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type,status")
+        .eq("id", userId)
+        .single();
+      if (!profile || profile.status !== "active") {
+        if (mounted) setDashboardPath(null);
+        return;
+      }
+      const path =
+        profile.user_type === "author"
+          ? "/dashboard/author"
+          : profile.user_type === "admin"
+          ? "/dashboard/admin"
+          : "/dashboard/reader";
+      if (mounted) setDashboardPath(path);
+    };
+
+    resolveDashboard();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      resolveDashboard();
+    });
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border">
@@ -25,18 +67,29 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              to="/login"
-              className="px-6 py-2 text-primary font-medium hover:bg-primary/5 rounded-lg transition"
-            >
-              Login
-            </Link>
-            <Link
-              to="/signup"
-              className="px-6 py-2 bg-gradient-to-r from-primary to-accent text-white font-medium rounded-lg hover:shadow-lg transition"
-            >
-              Join Now
-            </Link>
+            {dashboardPath ? (
+              <Link
+                to={dashboardPath}
+                className="px-6 py-2 bg-gradient-to-r from-primary to-accent text-white font-medium rounded-lg hover:shadow-lg transition"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-6 py-2 text-primary font-medium hover:bg-primary/5 rounded-lg transition"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-6 py-2 bg-gradient-to-r from-primary to-accent text-white font-medium rounded-lg hover:shadow-lg transition"
+                >
+                  Join Now
+                </Link>
+              </>
+            )}
           </div>
 
           <button
@@ -53,11 +106,14 @@ export default function Navbar() {
             <Link to="/articles" className="block py-2 text-foreground hover:text-primary">Articles</Link>
             <Link to="/authors" className="block py-2 text-foreground hover:text-primary">Authors</Link>
             <Link to="/courses" className="block py-2 text-foreground hover:text-primary">Courses</Link>
-            <Link to="/dashboard/reader" className="block py-2 text-foreground hover:text-primary">Dashboard</Link>
-            <div className="flex gap-3 pt-3 border-t border-border">
-              <Link to="/login" className="flex-1 py-2 text-center text-primary font-medium">Login</Link>
-              <Link to="/signup" className="flex-1 py-2 text-center bg-gradient-btn text-white rounded-lg">Join</Link>
-            </div>
+            {dashboardPath ? (
+              <Link to={dashboardPath} className="block py-2 text-foreground hover:text-primary">Dashboard</Link>
+            ) : (
+              <div className="flex gap-3 pt-3 border-t border-border">
+                <Link to="/login" className="flex-1 py-2 text-center text-primary font-medium">Login</Link>
+                <Link to="/signup" className="flex-1 py-2 text-center bg-gradient-btn text-white rounded-lg">Join</Link>
+              </div>
+            )}
           </div>
         )}
       </div>

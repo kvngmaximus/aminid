@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bookmark, Heart, Settings, LogOut, Download, Play, CheckCircle, Clock, BookOpen, ArrowRight } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import ArticleCard from "@/components/ArticleCard";
 import Button from "@/components/Button";
 import { supabase } from "@/lib/supabase";
@@ -145,25 +143,31 @@ export default function ReaderDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+      {/* Dashboard Header */}
+      <div className="sticky top-0 z-20 bg-white border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="font-poppins font-bold text-foreground">Aminid</Link>
+            <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary font-semibold">Reader</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm">
+              <Settings size={18} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut size={18} />
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <div className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-12">
-            <h1 className="font-poppins font-bold text-4xl text-foreground">
-              Your Dashboard
-            </h1>
-            <div className="flex gap-3">
-              <Button variant="ghost" size="md">
-                <Settings size={20} />
-              </Button>
-              <Button variant="ghost" size="md" onClick={handleLogout}>
-                <LogOut size={20} />
-              </Button>
-            </div>
+            <h1 className="font-poppins font-bold text-4xl text-foreground">Your Dashboard</h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             {[
               { label: "Saved Articles", value: "12", icon: Bookmark },
               { label: "Subscribed Authors", value: "8", icon: Heart },
@@ -198,7 +202,7 @@ export default function ReaderDashboard() {
           </div>
 
           {activeTab === "saved" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {savedArticles.map((article) => (
                 <ArticleCard
                   key={article.id}
@@ -239,7 +243,7 @@ export default function ReaderDashboard() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {activeCourses.map((course) => (
                     <div key={course.id} className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-lg transition">
                       <div className="relative overflow-hidden h-32">
@@ -306,7 +310,7 @@ export default function ReaderDashboard() {
               {completedCourses.length > 0 && (
                 <div className="mt-12">
                   <h3 className="font-poppins font-bold text-2xl text-foreground mb-6">Completed Courses</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {completedCourses.map((course) => (
                       <div key={course.id} className="bg-white rounded-xl border border-border overflow-hidden hover:shadow-lg transition">
                         <div className="relative overflow-hidden h-32">
@@ -358,7 +362,6 @@ export default function ReaderDashboard() {
         </div>
       </div>
 
-      <Footer />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Eye, Heart, TrendingUp, Settings, LogOut, Trash2, Edit2, BookOpen } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { Link } from "react-router-dom";
 import Button from "@/components/Button";
 import ArticlePostModal from "@/components/ArticlePostModal";
 import CourseCreateModal from "@/components/CourseCreateModal";
@@ -128,33 +127,39 @@ export default function AuthorDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+      {/* Dashboard Header */}
+      <div className="sticky top-0 z-20 bg-white border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="font-poppins font-bold text-foreground">Aminid</Link>
+            <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary font-semibold">Author</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button onClick={() => setShowArticleModal(true)} size="sm">
+              <Plus size={16} />
+              New Article
+            </Button>
+            <Button onClick={() => setShowCourseModal(true)} size="sm" variant="secondary">
+              <Plus size={16} />
+              New Course
+            </Button>
+            <Button variant="ghost" size="sm">
+              <Settings size={18} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut size={18} />
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <div className="flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-12">
-            <h1 className="font-poppins font-bold text-4xl text-foreground">
-              Author Dashboard
-            </h1>
-            <div className="flex gap-3">
-              <Button onClick={() => setShowArticleModal(true)}>
-                <Plus size={20} />
-                New Article
-              </Button>
-              <Button onClick={() => setShowCourseModal(true)} variant="secondary">
-                <Plus size={20} />
-                New Course
-              </Button>
-              <Button variant="ghost" size="md">
-                <Settings size={20} />
-              </Button>
-              <Button variant="ghost" size="md" onClick={handleLogout}>
-                <LogOut size={20} />
-              </Button>
-            </div>
+            <h1 className="font-poppins font-bold text-4xl text-foreground">Author Dashboard</h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {analytics.map((item) => (
               <div key={item.metric} className="bg-white rounded-xl p-6 border border-border">
                 <p className="text-sm text-muted-foreground mb-2">{item.metric}</p>
@@ -385,7 +390,6 @@ export default function AuthorDashboard() {
         editingCourse={editingCourse}
       />
 
-  <Footer />
     </div>
   );
 }
