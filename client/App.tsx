@@ -9,9 +9,18 @@ import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import ReaderDashboard from "./pages/ReaderDashboard";
-import AuthorDashboard from "./pages/AuthorDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
+import ReaderDashboard from "./pages/dashboard/reader/Index";
+import AuthorDashboard from "./pages/dashboard/author/Index";
+import AdminDashboard from "./pages/dashboard/admin/Index";
+import AdminUsers from "./pages/dashboard/admin/Users";
+import AdminArticles from "./pages/dashboard/admin/Articles";
+import AdminCourses from "./pages/dashboard/admin/Courses";
+import AdminRecognition from "./pages/dashboard/admin/Recognition";
+import AdminPayments from "./pages/dashboard/admin/Payments";
+import AdminSettings from "./pages/dashboard/admin/Settings";
+import ReaderSubscriptionsPage from "./pages/dashboard/reader/Subscriptions";
+import AuthorSettings from "./pages/dashboard/author/Settings";
+import ReaderSettings from "./pages/dashboard/reader/Settings";
 import NotFound from "./pages/NotFound";
 
 export default function App() {
@@ -29,8 +38,18 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard/reader" element={<ReaderDashboard />} />
+        <Route path="/dashboard/reader/subscriptions" element={<ReaderSubscriptionsPage />} />
+        <Route path="/dashboard/reader/settings" element={<ReaderSettings />} />
         <Route path="/dashboard/author" element={<AuthorDashboard />} />
+        <Route path="/dashboard/author/settings" element={<AuthorSettings />} />
         <Route path="/dashboard/admin" element={<AdminDashboard />} />
+        <Route path="/dashboard/admin/users" element={<AdminUsers />} />
+        <Route path="/dashboard/admin/articles" element={<AdminArticles />} />
+        <Route path="/dashboard/admin/courses" element={<AdminCourses />} />
+        <Route path="/dashboard/admin/recognition" element={<AdminRecognition />} />
+        <Route path="/dashboard/admin/payments" element={<AdminPayments />} />
+        <Route path="/dashboard/admin/settings" element={<AdminSettings />} />
+        <Route path="/account/subscriptions" element={<ReaderSubscriptionsPage />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

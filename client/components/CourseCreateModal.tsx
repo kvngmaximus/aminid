@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Upload } from "lucide-react";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Textarea from "@/components/Textarea";
+import { supabase } from "@/lib/supabase";
 
 interface CourseModule {
   id: string;
@@ -27,6 +28,7 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
   const [level, setLevel] = useState("Beginner");
   const [coverImage, setCoverImage] = useState("");
   const [coverImageInputType, setCoverImageInputType] = useState<"url" | "file">("url");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [modules, setModules] = useState<CourseModule[]>([
     { id: "1", title: "", lessons: 0, duration: 0, videoUrl: "" },
   ]);
@@ -80,13 +82,13 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
   };
 
   const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0] || null;
+    setCoverFile(file);
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setCoverImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      const previewUrl = URL.createObjectURL(file);
+      setCoverImage(previewUrl);
+    } else {
+      setCoverImage("");
     }
   };
 
@@ -101,8 +103,30 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Ensure buckets exist (best-effort)
+    try { await fetch("/api/storage/init", { method: "POST" }); } catch {}
+
+    let finalImageUrl = coverImage;
+    if (coverImageInputType === "file" && coverFile) {
+      try {
+        const { data: sessionRes } = await supabase.auth.getSession();
+        const uid = sessionRes.session?.user?.id ?? "anon";
+        const mime = coverFile.type || "image/jpeg";
+        const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg";
+        const path = `${uid}/course-cover-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("course-covers")
+          .upload(path, coverFile, { upsert: true, contentType: mime });
+        if (upErr) throw upErr;
+        const { data: pub } = supabase.storage.from("course-covers").getPublicUrl(path);
+        finalImageUrl = pub.publicUrl;
+      } catch (err) {
+        console.error("[course.cover.upload]", err);
+      }
+    }
 
     const course = {
       id: editingCourse?.id || Date.now().toString(),
@@ -112,7 +136,7 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
       price: parseInt(price),
       duration: parseInt(duration),
       level,
-      image: coverImage || "https://images.unsplash.com/photo-1516321318423-f06f70a504f0?w=1200&h=600&fit=crop",
+      image: finalImageUrl || "https://images.unsplash.com/photo-1516321318423-f06f70a504f0?w=1200&h=600&fit=crop",
       modules: modules.filter(m => m.title.trim()),
       author: editingCourse?.author || "Current Author",
       authorImage: editingCourse?.authorImage || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
@@ -172,8 +196,8 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
                 onClick={() => setCoverImageInputType("url")}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   coverImageInputType === "url"
-                    ? "bg-primary text-white"
-                    : "bg-gray-200 text-foreground"
+                    ? "bg-gray-100 text-foreground ring-1 ring-border"
+                    : "bg-gray-50 text-muted-foreground ring-1 ring-border"
                 }`}
               >
                 Image URL
@@ -183,8 +207,8 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
                 onClick={() => setCoverImageInputType("file")}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   coverImageInputType === "file"
-                    ? "bg-primary text-white"
-                    : "bg-gray-200 text-foreground"
+                    ? "bg-gray-100 text-foreground ring-1 ring-border"
+                    : "bg-gray-50 text-muted-foreground ring-1 ring-border"
                 }`}
               >
                 Upload File
@@ -244,7 +268,7 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">
-                Price ($)
+                Price (₦)
               </label>
               <Input
                 type="number"
@@ -337,7 +361,7 @@ export default function CourseCreateModal({ isOpen, onClose, onSubmit, editingCo
                             const input = document.getElementById(`video-file-${module.id}`) as HTMLInputElement;
                             input?.click();
                           }}
-                          className="flex-1 px-3 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition flex items-center justify-center gap-2"
+                          className="flex-1 px-3 py-2 bg-gray-100 text-foreground rounded-lg text-sm font-medium hover:bg-gray-200 transition flex items-center justify-center gap-2 ring-1 ring-border"
                         >
                           <Upload size={14} />
                           Upload Video

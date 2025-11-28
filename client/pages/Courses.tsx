@@ -1,90 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CourseCard from "@/components/CourseCard";
 import Input from "@/components/Input";
+import { supabase } from "@/lib/supabase";
+// Removed paywall gating on Courses page per request
 
-const allCourses = [
-  {
-    id: "1",
-    title: "Mastering Deep Work & Focus",
-    description: "Learn scientifically-proven techniques to eliminate distractions and achieve flow state.",
-    author: "Sarah Amin",
-    authorImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    price: 49,
-    image: "https://images.unsplash.com/photo-1516321318423-f06f70a504f0?w=600&h=400&fit=crop",
-    rating: 4.8,
-    students: 2845,
-    duration: 12,
-    level: "Beginner",
-  },
-  {
-    id: "2",
-    title: "Content Strategy for Premium Writers",
-    description: "Build a sustainable income from your writing through strategic content planning.",
-    author: "Ahmed Hassan",
-    authorImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    price: 69,
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop",
-    rating: 4.9,
-    students: 3421,
-    duration: 18,
-    level: "Intermediate",
-  },
-  {
-    id: "3",
-    title: "Psychology of Learning & Retention",
-    description: "Understand how memory works and optimize your learning for better retention.",
-    author: "Fatima Khan",
-    authorImage: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    price: 59,
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=400&fit=crop",
-    rating: 4.7,
-    students: 1923,
-    duration: 15,
-    level: "Beginner",
-  },
-  {
-    id: "4",
-    title: "Advanced Analytics & Data Visualization",
-    description: "Master data storytelling and advanced visualization techniques.",
-    author: "Ali Mohammed",
-    authorImage: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
-    price: 79,
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop",
-    rating: 4.9,
-    students: 4156,
-    duration: 24,
-    level: "Advanced",
-  },
-  {
-    id: "5",
-    title: "AI Writing Assistant Masterclass",
-    description: "Harness AI tools to enhance your writing without compromising authenticity.",
-    author: "Zainab Amara",
-    authorImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    price: 59,
-    image: "https://images.unsplash.com/photo-1677442d019cecf4d4ccf5d96a52f53f29e92242?w=600&h=400&fit=crop",
-    rating: 4.8,
-    students: 2134,
-    duration: 16,
-    level: "Intermediate",
-  },
-  {
-    id: "6",
-    title: "Building Your Author Brand",
-    description: "Create a distinctive author brand that resonates with your target audience.",
-    author: "Sarah Amin",
-    authorImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    price: 44,
-    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop",
-    rating: 4.6,
-    students: 3567,
-    duration: 10,
-    level: "Beginner",
-  },
-];
+type UICourse = {
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  authorImage: string;
+  price: number;
+  image: string;
+  rating: number;
+  students: number;
+  duration: number;
+  level: "Beginner" | "Intermediate" | "Advanced";
+};
 
 type SortType = "newest" | "popular" | "rating" | "price-low" | "price-high";
 
@@ -92,10 +28,69 @@ export default function Courses() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortType>("popular");
   const [selectedLevel, setSelectedLevel] = useState<string>("");
+  const [items, setItems] = useState<UICourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // Courses page should be visible without auth or subscription
 
   const levels = ["Beginner", "Intermediate", "Advanced"];
 
-  const filteredCourses = allCourses
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { data: courseRows, error: courseErr } = await supabase
+          .from("courses")
+          .select("id,title,description,author_id,price,status,created_at")
+          .eq("status", "published")
+          .order("created_at", { ascending: false });
+        if (courseErr) throw courseErr;
+
+        const authorIds = Array.from(new Set((courseRows ?? []).map(c => c.author_id)));
+        const { data: authors } = await supabase
+          .from("profiles")
+          .select("id,name,avatar_url")
+          .in("id", authorIds);
+        const authorMap = new Map((authors ?? []).map(a => [a.id, a]));
+
+        // Optional: compute students by counting enrollments per course
+        const courseIds = (courseRows ?? []).map(c => c.id);
+        const { data: enrolls } = await supabase
+          .from("course_enrollments")
+          .select("course_id")
+          .in("course_id", courseIds);
+        const studentCount = new Map<string, number>();
+        (enrolls ?? []).forEach(e => studentCount.set(e.course_id, (studentCount.get(e.course_id) ?? 0) + 1));
+
+        const mapped: UICourse[] = (courseRows ?? []).map(c => {
+          const author = authorMap.get(c.author_id);
+          // Use cover if available in future; keep safe fallback for asset only
+          const image = "https://images.unsplash.com/photo-1516321318423-f06f70a504f0?w=600&h=400&fit=crop";
+          return {
+            id: c.id,
+            title: c.title,
+            description: c.description ?? "",
+            author: author?.name ?? "Unknown",
+            authorImage: author?.avatar_url ?? "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+            price: Number(c.price ?? 0),
+            image,
+            rating: undefined,
+            students: studentCount.get(c.id) ?? 0,
+            duration: undefined,
+            level: undefined as any,
+          };
+        });
+        setItems(mapped);
+      } catch (err: any) {
+        setError(err.message ?? "Failed to load courses");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filteredCourses = items
     .filter((course) =>
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -114,7 +109,7 @@ export default function Courses() {
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
-      <div className="flex-1">
+      <div className="flex-1 relative">
         <section className="py-16 bg-gradient-to-r from-primary/10 to-accent/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="font-poppins font-bold text-4xl text-foreground mb-6">Premium Courses</h1>
@@ -134,6 +129,8 @@ export default function Courses() {
             </div>
           </div>
         </section>
+
+        {/* Courses listing is browseable without subscription; paywall only on CourseDetail */}
 
         <section className="py-12 border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -174,7 +171,13 @@ export default function Courses() {
 
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {filteredCourses.length > 0 ? (
+            {loading && (
+              <div className="text-center py-10 text-muted-foreground">Loading courses…</div>
+            )}
+            {error && (
+              <div className="text-center py-10 text-red-600">{error}</div>
+            )}
+            {!loading && !error && filteredCourses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredCourses.map((course) => (
                   <CourseCard key={course.id} {...course} />

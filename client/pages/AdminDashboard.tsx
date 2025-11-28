@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Users, FileText, Award, CreditCard, Settings, LogOut, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "@/components/Button";
@@ -10,24 +10,15 @@ type AdminTab = "users" | "articles" | "recognition" | "payments" | "settings";
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AdminTab>("users");
-
-  const stats = [
-    { label: "Total Users", value: "45,230", trend: "+12%" },
-    { label: "Published Articles", value: "8,456", trend: "+8%" },
-    { label: "Premium Members", value: "12,340", trend: "+23%" },
-    { label: "Total Revenue", value: "$234,567", trend: "+34%" },
-  ];
-
-  const pendingArticles = [
-    { id: 1, title: "How to Build Better Habits", author: "John Doe", status: "pending" },
-    { id: 2, title: "Advanced Python Techniques", author: "Jane Smith", status: "pending" },
-  ];
-
-  const users = [
-    { id: 1, name: "Sarah Amin", role: "Premium Author", status: "active" },
-    { id: 2, name: "Ahmed Hassan", role: "Premium Author", status: "active" },
-    { id: 3, name: "Regular Reader", role: "Free Reader", status: "active" },
-  ];
+  const [loading, setLoading] = useState<boolean>(true);
+  const [stats, setStats] = useState({
+    totalUsers: undefined as number | undefined,
+    publishedArticles: undefined as number | undefined,
+    premiumMembers: undefined as number | undefined,
+    totalRevenue: undefined as number | undefined,
+  });
+  const [users, setUsers] = useState<Array<{ id: string; name: string; role: string; status: string }>>([]);
+  const [pendingArticles, setPendingArticles] = useState<Array<{ id: string; title: string; author: string; status: string }>>([]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut({ scope: "local" });
@@ -53,10 +44,110 @@ export default function AdminDashboard() {
         navigate("/");
         return;
       }
-      if (profile.user_type === "author") navigate("/dashboard/author");
-      if (profile.user_type === "reader") navigate("/dashboard/reader");
+      if (profile.user_type === "author") {
+        navigate("/dashboard/author");
+        return;
+      }
+      if (profile.user_type === "reader") {
+        navigate("/dashboard/reader");
+        return;
+      }
+      // Load data regardless; RLS will restrict non-admin queries safely
+      await loadAdminData();
+      subscribeRealtime();
     })();
   }, [navigate]);
+
+  const loadAdminData = async () => {
+    setLoading(true);
+    // Counts (robust: don't rely on head-only; fallback to data length)
+    const usersRes = await supabase
+      .from("profiles")
+      .select("id", { count: "exact" });
+    const usersCount = (usersRes.count ?? (usersRes.data?.length ?? 0));
+
+    const articlesRes = await supabase
+      .from("articles")
+      .select("id", { count: "exact" })
+      .eq("status", "published");
+    const publishedCount = (articlesRes.count ?? (articlesRes.data?.length ?? 0));
+
+    // Premium members (active subscriptions)
+    const { data: subs } = await supabase
+      .from("subscriptions")
+      .select("user_id,status")
+      .eq("status", "active");
+    const premiumMembers = new Set((subs || []).map((s: any) => s.user_id)).size;
+
+    // Revenue (succeeded payments)
+    const { data: payments } = await supabase
+      .from("payments")
+      .select("amount,status")
+      .eq("status", "succeeded");
+    const totalRevenue = (payments || []).reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+
+    setStats({
+      totalUsers: usersCount ?? 0,
+      publishedArticles: publishedCount ?? 0,
+      premiumMembers,
+      totalRevenue,
+    });
+
+    // Pending articles
+    const { data: pending } = await supabase
+      .from("articles")
+      .select("id,title,author_id,status")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    // Resolve authors
+    const authorIds = Array.from(new Set((pending || []).map((a: any) => a.author_id).filter(Boolean)));
+    let authorsById: Record<string, string> = {};
+    if (authorIds.length) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id,name")
+        .in("id", authorIds);
+      (profiles || []).forEach((p: any) => {
+        authorsById[p.id] = p.name || "Unknown";
+      });
+    }
+    setPendingArticles((pending || []).map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      author: authorsById[a.author_id] || "Unknown",
+      status: a.status || "pending",
+    })));
+
+    // Recent users
+    const { data: recentUsers } = await supabase
+      .from("profiles")
+      .select("id,name,user_type,status")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setUsers((recentUsers || []).map((u: any) => ({
+      id: u.id,
+      name: u.name || "Unknown",
+      role: u.user_type || "user",
+      status: u.status || "active",
+    })));
+    setLoading(false);
+  };
+
+  const subscribeRealtime = () => {
+    const channel = supabase
+      .channel("admin-dashboard")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => loadAdminData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "articles" }, () => loadAdminData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "subscriptions" }, () => loadAdminData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => loadAdminData())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -85,12 +176,19 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {stats.map((stat) => (
+            {[
+              { label: "Total Users", value: stats.totalUsers ?? undefined },
+              { label: "Published Articles", value: stats.publishedArticles ?? undefined },
+              { label: "Premium Members", value: stats.premiumMembers ?? undefined },
+              { label: "Total Revenue", value: stats.totalRevenue ?? undefined },
+            ].map((stat) => (
               <div key={stat.label} className="bg-white rounded-xl p-6 border border-border">
                 <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-poppins font-bold text-foreground">{stat.value}</p>
-                  <span className="text-xs text-green-500 font-semibold">{stat.trend}</span>
+                  <p className="text-2xl font-poppins font-bold text-foreground">
+                    {stat.value === undefined ? "—" :
+                      stat.label === "Total Revenue" ? `₦${Number(stat.value).toLocaleString()}` : Number(stat.value).toLocaleString()}
+                  </p>
                 </div>
               </div>
             ))}
@@ -236,7 +334,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg p-6">
                     <p className="text-muted-foreground text-sm mb-2">Pending Payouts</p>
-                    <p className="text-3xl font-poppins font-bold text-accent">$12,450</p>
+                    <p className="text-3xl font-poppins font-bold text-accent">₦12,450</p>
                   </div>
                 </div>
                 <Button size="lg">Process Pending Payouts</Button>

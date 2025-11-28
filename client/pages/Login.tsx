@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -14,6 +14,27 @@ export default function Login() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
+
+  // Redirect already-authenticated users to their dashboard
+  useEffect(() => {
+    (async () => {
+      const { data: s } = await supabase.auth.getSession();
+      const session = s.session;
+      if (!session) return;
+      const uid = session.user.id;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_type,status")
+        .eq("id", uid)
+        .single();
+      if (!profile) return;
+      if (profile.status !== "active") { navigate("/"); return; }
+      const type = (profile.user_type as "reader" | "author" | "admin") ?? "reader";
+      if (type === "author") navigate("/dashboard/author");
+      else if (type === "admin") navigate("/dashboard/admin");
+      else navigate("/dashboard/reader");
+    })();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -12,6 +12,7 @@ interface AuthorCardProps {
   badge?: "month" | "year" | "featured";
   onClick?: () => void;
   onFollowClick?: () => void;
+  isFollowing?: boolean;
 }
 
 export default function AuthorCard({
@@ -24,6 +25,7 @@ export default function AuthorCard({
   badge,
   onClick,
   onFollowClick,
+  isFollowing = false,
 }: AuthorCardProps) {
   const getBadge = () => {
     if (badge === "month") {
@@ -88,7 +90,7 @@ export default function AuthorCard({
         }}
         className="w-full py-2 bg-gradient-to-r from-primary to-accent text-white font-medium rounded-lg hover:shadow-lg transition-shadow text-sm"
       >
-        Follow
+        {isFollowing ? "Following" : "Follow"}
       </button>
     </div>
   );

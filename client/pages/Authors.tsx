@@ -1,63 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AuthorCard from "@/components/AuthorCard";
 import Input from "@/components/Input";
-
-const allAuthors = [
-  {
-    id: "a1",
-    name: "Sarah Amin",
-    bio: "Award-winning author & productivity expert",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
-    followers: 15420,
-    isPremium: true,
-    badge: "month" as const,
-  },
-  {
-    id: "a2",
-    name: "Ahmed Hassan",
-    bio: "Bestselling author on personal development",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
-    followers: 28950,
-    isPremium: true,
-    badge: "year" as const,
-  },
-  {
-    id: "a3",
-    name: "Fatima Khan",
-    bio: "Psychology researcher & educator",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop",
-    followers: 9230,
-    isPremium: true,
-  },
-  {
-    id: "a4",
-    name: "Ali Mohammed",
-    bio: "Entrepreneur & business strategist",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop",
-    followers: 12560,
-    isPremium: true,
-  },
-  {
-    id: "a5",
-    name: "Zainab Amara",
-    bio: "Tech innovator & AI researcher",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop",
-    followers: 8750,
-    isPremium: true,
-  },
-  {
-    id: "a6",
-    name: "Omar Khalid",
-    bio: "Travel writer & cultural explorer",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop",
-    followers: 6420,
-    isPremium: false,
-  },
-];
+import { supabase } from "@/lib/supabase";
+type AuthorItem = {
+  id: string;
+  name: string;
+  bio: string;
+  image: string;
+  followers: number;
+  isPremium?: boolean;
+  badge?: "month" | "year" | "featured";
+  isFollowing?: boolean;
+};
 
 type SortType = "followers" | "recent" | "trending";
 
@@ -66,18 +24,86 @@ export default function Authors() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortType>("followers");
   const [filterPremium, setFilterPremium] = useState(false);
+  const [items, setItems] = useState<AuthorItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const filteredAuthors = allAuthors
-    .filter((author) =>
-      author.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      author.bio.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .filter((author) => !filterPremium || author.isPremium)
-    .sort((a, b) => {
-      if (sortBy === "followers") return b.followers - a.followers;
-      if (sortBy === "trending") return Math.random() - 0.5;
-      return 0;
-    });
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      const { data: sessionRes } = await supabase.auth.getSession();
+      const uid = sessionRes.session?.user?.id ?? null;
+      setUserId(uid);
+
+      try {
+        const [artRes, courseRes] = await Promise.all([
+          supabase.from("articles").select("author_id").eq("status", "published"),
+          supabase.from("courses").select("author_id").eq("status", "published"),
+        ]);
+        const authorIds = Array.from(new Set([
+          ...((artRes.data ?? []).map((r: any) => r.author_id).filter(Boolean)),
+          ...((courseRes.data ?? []).map((r: any) => r.author_id).filter(Boolean)),
+        ]));
+
+        if (!authorIds.length) {
+          setItems([]);
+          setLoading(false);
+          return;
+        }
+
+        const { data: profiles, error: profErr } = await supabase
+          .from("profiles")
+          .select("id,name,avatar_url,bio")
+          .in("id", authorIds);
+        if (profErr) throw profErr;
+
+        const { data: follows } = await supabase
+          .from("author_follows")
+          .select("author_id,follower_id")
+          .in("author_id", authorIds);
+
+        const followerCount = new Map<string, number>();
+        const followingSet = new Set<string>();
+        (follows ?? []).forEach((row: any) => {
+          followerCount.set(row.author_id, (followerCount.get(row.author_id) ?? 0) + 1);
+          if (uid && row.follower_id === uid) followingSet.add(row.author_id);
+        });
+
+        const mapped: AuthorItem[] = (profiles ?? []).map((p: any) => ({
+          id: p.id,
+          name: p.name ?? "Unknown",
+          bio: p.bio ?? "",
+          image:
+            p.avatar_url ??
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
+          followers: followerCount.get(p.id) ?? 0,
+          isPremium: undefined,
+          badge: undefined,
+          isFollowing: followingSet.has(p.id),
+        }));
+
+        const filtered = mapped
+          .filter((author) =>
+            author.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            author.bio.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+          .filter((author) => !filterPremium || author.isPremium)
+          .sort((a, b) => {
+            if (sortBy === "followers") return b.followers - a.followers;
+            if (sortBy === "trending") return Math.random() - 0.5;
+            return 0;
+          });
+        setItems(filtered);
+      } catch (err: any) {
+        setError(err.message ?? "Failed to load authors");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [searchQuery, sortBy, filterPremium]);
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -140,13 +166,48 @@ export default function Authors() {
 
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {filteredAuthors.length > 0 ? (
+            {error && (
+              <div className="text-center py-10 text-red-600">{error}</div>
+            )}
+            {items.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredAuthors.map((author) => (
+                {items.map((author) => (
                   <AuthorCard
                     key={author.id}
-                    {...author}
+                    id={author.id}
+                    name={author.name}
+                    bio={author.bio}
+                    image={author.image}
+                    followers={author.followers}
+                    isPremium={author.isPremium}
+                    badge={author.badge}
+                    isFollowing={author.isFollowing}
                     onClick={() => navigate(`/authors/${author.id}`)}
+                    onFollowClick={async () => {
+                      const { data: sessionRes } = await supabase.auth.getSession();
+                      const uid = sessionRes.session?.user?.id;
+                      if (!uid) {
+                        alert("Please sign in to follow authors.");
+                        return;
+                      }
+                      try {
+                        if (author.isFollowing) {
+                          await supabase
+                            .from("author_follows")
+                            .delete()
+                            .eq("author_id", author.id)
+                            .eq("follower_id", uid);
+                          setItems((prev) => prev.map((a) => a.id === author.id ? { ...a, isFollowing: false, followers: Math.max(0, (a.followers ?? 0) - 1) } : a));
+                        } else {
+                          await supabase
+                            .from("author_follows")
+                            .insert({ author_id: author.id, follower_id: uid });
+                          setItems((prev) => prev.map((a) => a.id === author.id ? { ...a, isFollowing: true, followers: (a.followers ?? 0) + 1 } : a));
+                        }
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }}
                   />
                 ))}
               </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bookmark, Heart, Settings, LogOut, Download, Play, CheckCircle, Clock, BookOpen, ArrowRight } from "lucide-react";
 import ArticleCard from "@/components/ArticleCard";
@@ -51,86 +51,183 @@ export default function ReaderDashboard() {
     })();
   }, [navigate]);
 
-  const savedArticles = [
-    {
-      id: "1",
-      title: "The Art of Deep Work in a Distracted World",
-      excerpt: "Learn how to maintain focus and productivity in an increasingly digital world.",
-      author: "Sarah Amin",
-      authorImage: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-      readTime: 8,
-      likes: 234,
-      image: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600&h=400&fit=crop",
-      isPremium: false,
-      category: "Productivity",
-    },
-    {
-      id: "2",
-      title: "Building a Personal Brand as a Writer",
-      excerpt: "Strategies to establish yourself as a thought leader in your niche.",
-      author: "Ahmed Hassan",
-      authorImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-      readTime: 12,
-      likes: 567,
-      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop",
-      isPremium: true,
-      category: "Business",
-    },
-  ];
+  const [savedArticles, setSavedArticles] = useState<Array<{
+    id: string;
+    title: string;
+    excerpt: string | null;
+    author: string;
+    authorImage: string | null;
+    readTime: number;
+    likes: number;
+    image: string | null;
+    isPremium: boolean;
+    category?: string | null;
+    contentBlocks?: Array<{ type: "paragraph" | "image"; content: string }>;
+  }>>([]);
+  
 
-  const subscriptions = [
-    { id: "a1", name: "Sarah Amin", followers: 15420, premium: true },
-    { id: "a2", name: "Ahmed Hassan", followers: 28950, premium: true },
-    { id: "a3", name: "Fatima Khan", followers: 9230, premium: true },
-  ];
+  const [subscriptions, setSubscriptions] = useState<Array<{ id: string; name: string; followers: number; premium: boolean }>>([]);
 
-  const enrolledCourses: EnrolledCourse[] = [
-    {
-      id: "1",
-      title: "Mastering Deep Work & Focus",
-      author: "Sarah Amin",
-      image: "https://images.unsplash.com/photo-1516321318423-f06f70a504f0?w=400&h=200&fit=crop",
-      price: 49,
-      progress: 65,
-      currentModule: 4,
-      totalModules: 8,
-      completedLessons: 18,
-      totalLessons: 32,
-      lastAccessed: "2 hours ago",
-      estimatedTimeLeft: 4.5,
-    },
-    {
-      id: "2",
-      title: "Advanced Python Programming",
-      author: "John Developer",
-      image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=200&fit=crop",
-      price: 79,
-      progress: 30,
-      currentModule: 2,
-      totalModules: 10,
-      completedLessons: 8,
-      totalLessons: 42,
-      lastAccessed: "1 week ago",
-      estimatedTimeLeft: 8.5,
-    },
-    {
-      id: "3",
-      title: "UI/UX Design Fundamentals",
-      author: "Emma Designer",
-      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=200&fit=crop",
-      price: 59,
-      progress: 90,
-      currentModule: 8,
-      totalModules: 8,
-      completedLessons: 29,
-      totalLessons: 31,
-      lastAccessed: "3 days ago",
-      estimatedTimeLeft: 0.5,
-    },
-  ];
+  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const activeCourses = enrolledCourses.filter(c => c.progress < 100);
-  const completedCourses = enrolledCourses.filter(c => c.progress === 100);
+  // Load reader data (saved articles, subscriptions, enrollments)
+  useEffect(() => {
+    (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData.session;
+      if (!session) return;
+      const userId = session.user.id;
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Saved Articles via bookmarks
+        const { data: bookmarks, error: bmError } = await supabase
+          .from("article_bookmarks")
+          .select("article_id")
+          .eq("user_id", userId);
+        if (bmError) throw bmError;
+        const articleIds = (bookmarks ?? []).map(b => b.article_id);
+
+        let saved: Array<any> = [];
+        if (articleIds.length) {
+          const { data: articles, error: artError } = await supabase
+            .from("articles")
+            .select("id,title,excerpt,cover_url,category,premium,content,author_id")
+            .in("id", articleIds)
+            .eq("status", "published");
+          if (artError) throw artError;
+
+          const authorIds = Array.from(new Set((articles ?? []).map(a => a.author_id)));
+          const { data: authors, error: authErr } = await supabase
+            .from("profiles")
+            .select("id,name,avatar_url")
+            .in("id", authorIds);
+          if (authErr) throw authErr;
+          const authorMap = new Map((authors ?? []).map(a => [a.id, a]));
+
+          const { data: likesRows, error: likesErr } = await supabase
+            .from("article_likes")
+            .select("article_id")
+            .in("article_id", articleIds);
+          if (likesErr) throw likesErr;
+          const likeCount = new Map<string, number>();
+          (likesRows ?? []).forEach(l => likeCount.set(l.article_id, (likeCount.get(l.article_id) ?? 0) + 1));
+
+          saved = (articles ?? []).map(a => {
+            let contentBlocks: Array<{ type: "paragraph" | "image"; content: string }> | undefined;
+            try {
+              contentBlocks = a.content ? JSON.parse(a.content) : undefined;
+            } catch {}
+            const text = contentBlocks?.filter(b => b.type === "paragraph").map(b => b.content).join(" ") ?? a.excerpt ?? "";
+            const words = text.trim().split(/\s+/).length;
+            const readTime = Math.max(1, Math.ceil(words / 200));
+            const author = authorMap.get(a.author_id);
+            return {
+              id: a.id,
+              title: a.title,
+              excerpt: a.excerpt ?? "",
+              author: author?.name ?? "Unknown",
+              authorImage: author?.avatar_url ?? null,
+              readTime,
+              likes: likeCount.get(a.id) ?? 0,
+              image: a.cover_url ?? null,
+              isPremium: !!a.premium,
+              category: a.category ?? null,
+              contentBlocks,
+            };
+          });
+        }
+        setSavedArticles(saved);
+
+        // Subscriptions (placeholder list of authors)
+        const { data: authorProfiles } = await supabase
+          .from("profiles")
+          .select("id,name")
+          .eq("user_type", "author")
+          .limit(10);
+        setSubscriptions((authorProfiles ?? []).map(p => ({ id: p.id, name: p.name ?? "Unnamed", followers: 0, premium: true })));
+
+        // Enrollments
+        const { data: enrolls, error: enrErr } = await supabase
+          .from("course_enrollments")
+          .select("course_id, progress, created_at")
+          .eq("user_id", userId);
+        if (enrErr) throw enrErr;
+        const courseIds = (enrolls ?? []).map(e => e.course_id);
+        let courses: EnrolledCourse[] = [];
+        if (courseIds.length) {
+          const { data: courseRows, error: courseErr } = await supabase
+            .from("courses")
+            .select("id,title,author_id,price")
+            .in("id", courseIds)
+            .eq("status", "published");
+          if (courseErr) throw courseErr;
+
+          const authorIds2 = Array.from(new Set((courseRows ?? []).map(c => c.author_id)));
+          const { data: authors2 } = await supabase
+            .from("profiles")
+            .select("id,name")
+            .in("id", authorIds2);
+          const nameMap = new Map((authors2 ?? []).map(a => [a.id, a.name ?? "Unknown"]));
+
+          const { data: modules } = await supabase
+            .from("course_modules")
+            .select("id,course_id")
+            .in("course_id", courseIds);
+          const moduleCount = new Map<string, number>();
+          (modules ?? []).forEach(m => moduleCount.set(m.course_id, (moduleCount.get(m.course_id) ?? 0) + 1));
+
+          const { data: lessons } = await supabase
+            .from("course_lessons")
+            .select("module_id")
+            .in("module_id", (modules ?? []).map(m => m.id));
+          const moduleLessonCount = new Map<string, number>();
+          (lessons ?? []).forEach(l => moduleLessonCount.set(l.module_id, (moduleLessonCount.get(l.module_id) ?? 0) + 1));
+          const totalLessonsByCourse = new Map<string, number>();
+          (modules ?? []).forEach(m => {
+            const cid = m.course_id as string;
+            const lc = moduleLessonCount.get(m.id) ?? 0;
+            totalLessonsByCourse.set(cid, (totalLessonsByCourse.get(cid) ?? 0) + lc);
+          });
+
+          courses = (courseRows ?? []).map(c => {
+            const progress = (enrolls ?? []).find(e => e.course_id === c.id)?.progress ?? 0;
+            const totalModules = moduleCount.get(c.id) ?? 0;
+            const totalLessons = totalLessonsByCourse.get(c.id) ?? 0;
+            const completedLessons = Math.round((progress / 100) * totalLessons);
+            const currentModule = Math.max(1, Math.min(totalModules, Math.ceil((progress / 100) * Math.max(1, totalModules))));
+            const estimatedTimeLeft = Number(((100 - progress) / 20).toFixed(1));
+            return {
+              id: c.id,
+              title: c.title,
+              author: nameMap.get(c.author_id) ?? "Unknown",
+              image: "https://images.unsplash.com/photo-1516321318423-f06f70a504f0?w=400&h=200&fit=crop",
+              price: Number(c.price ?? 0),
+              progress: Number(progress),
+              currentModule,
+              totalModules,
+              completedLessons,
+              totalLessons,
+              lastAccessed: "",
+              estimatedTimeLeft,
+            };
+          });
+        }
+        setEnrolledCourses(courses);
+      } catch (err: any) {
+        setError(err.message ?? "Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const activeCourses = useMemo(() => enrolledCourses.filter(c => c.progress < 100), [enrolledCourses]);
+  const completedCourses = useMemo(() => enrolledCourses.filter(c => c.progress === 100), [enrolledCourses]);
 
   const handleContinueLearning = (courseId: string) => {
     navigate(`/courses/${courseId}?tab=curriculum`);
@@ -151,7 +248,10 @@ export default function ReaderDashboard() {
             <span className="text-xs px-2 py-1 rounded bg-primary/10 text-primary font-semibold">Reader</span>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/reader/subscriptions") }>
+              <Heart size={18} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/reader/settings") }>
               <Settings size={18} />
             </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
@@ -169,8 +269,8 @@ export default function ReaderDashboard() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
             {[
-              { label: "Saved Articles", value: "12", icon: Bookmark },
-              { label: "Subscribed Authors", value: "8", icon: Heart },
+              { label: "Saved Articles", value: savedArticles.length.toString(), icon: Bookmark },
+              { label: "Subscribed Authors", value: subscriptions.length.toString(), icon: Heart },
               { label: "Active Courses", value: activeCourses.length.toString(), icon: BookOpen },
               { label: "Premium Plan", value: "Active", icon: Settings },
             ].map((stat) => (
@@ -203,7 +303,16 @@ export default function ReaderDashboard() {
 
           {activeTab === "saved" && (
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {savedArticles.map((article) => (
+              {loading && (
+                <div className="col-span-full text-center text-muted-foreground">Loading saved articles…</div>
+              )}
+              {error && (
+                <div className="col-span-full text-center text-red-600">{error}</div>
+              )}
+              {!loading && !error && savedArticles.length === 0 && (
+                <div className="col-span-full text-center text-muted-foreground">No saved articles yet.</div>
+              )}
+              {!loading && !error && savedArticles.map((article) => (
                 <ArticleCard
                   key={article.id}
                   {...article}
@@ -215,7 +324,10 @@ export default function ReaderDashboard() {
 
           {activeTab === "subscriptions" && (
             <div className="space-y-4">
-              {subscriptions.map((sub) => (
+              {loading && (
+                <div className="text-center text-muted-foreground">Loading subscriptions…</div>
+              )}
+              {!loading && subscriptions.map((sub) => (
                 <div key={sub.id} className="bg-white rounded-xl p-6 border border-border flex items-center justify-between hover:shadow-lg transition">
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">{sub.name}</h3>

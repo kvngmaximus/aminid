@@ -10,10 +10,10 @@ interface CourseCardProps {
   authorImage: string;
   price: number;
   image: string;
-  rating: number;
+  rating?: number;
   students: number;
-  duration: number;
-  level: "Beginner" | "Intermediate" | "Advanced";
+  duration?: number;
+  level?: "Beginner" | "Intermediate" | "Advanced";
   isPremium?: boolean;
 }
 
@@ -40,9 +40,11 @@ export default function CourseCard({
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        <div className="absolute top-4 right-4 bg-accent text-white px-3 py-1 rounded-full text-xs font-bold">
-          {level}
-        </div>
+        {level && (
+          <div className="absolute top-4 right-4 bg-accent text-white px-3 py-1 rounded-full text-xs font-bold">
+            {level}
+          </div>
+        )}
       </div>
 
       <div className="p-6">
@@ -63,17 +65,21 @@ export default function CourseCard({
           <div className="flex-1">
             <p className="font-medium text-foreground text-sm">{author}</p>
           </div>
-          <div className="flex items-center gap-1 text-accent">
-            <Star size={16} fill="currentColor" />
-            <span className="text-sm font-semibold">{rating}</span>
-          </div>
+          {typeof rating === "number" && (
+            <div className="flex items-center gap-1 text-accent">
+              <Star size={16} fill="currentColor" />
+              <span className="text-sm font-semibold">{rating}</span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-4 text-xs text-muted-foreground mb-6">
-          <div className="flex items-center gap-1">
-            <Clock size={14} />
-            <span>{duration} hours</span>
-          </div>
+          {typeof duration === "number" && (
+            <div className="flex items-center gap-1">
+              <Clock size={14} />
+              <span>{duration} hours</span>
+            </div>
+          )}
           <div className="flex items-center gap-1">
             <Users size={14} />
             <span>{students.toLocaleString()} enrolled</span>
@@ -82,7 +88,7 @@ export default function CourseCard({
 
         <div className="flex items-center justify-between gap-3">
           <div className="text-2xl font-poppins font-bold text-primary">
-            ${price}
+            ₦{Number(price || 0).toLocaleString()}
           </div>
           <Link to={`/courses/${id}`} className="flex-1">
             <Button size="md" className="w-full">

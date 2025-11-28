@@ -2,7 +2,7 @@ import { ReactNode, ButtonHTMLAttributes } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
-  variant?: "primary" | "secondary" | "ghost" | "outline";
+  variant?: "primary" | "secondary" | "ghost" | "outline" | "destructive";
   size?: "sm" | "md" | "lg";
 }
 
@@ -30,6 +30,8 @@ export default function Button({
       "text-foreground hover:bg-muted",
     outline:
       "border-2 border-primary text-primary hover:bg-primary hover:text-white",
+    destructive:
+      "bg-destructive text-destructive-foreground hover:opacity-90",
   };
 
   return (

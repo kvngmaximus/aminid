@@ -1,5 +1,7 @@
-/** @import must precede all other statements */
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap");
+/** @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap");
+/** Removed external Google Fonts import to avoid network errors in preview.
+    Tailwind already defines font stacks with local fallbacks (Inter, Poppins).
+    If you want exact fonts, host them locally and add @font-face rules. */
 
 @tailwind base;
 @tailwind components;

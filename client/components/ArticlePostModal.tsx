@@ -155,8 +155,8 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit, editingArt
                 onClick={() => setCoverImageInputType("url")}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   coverImageInputType === "url"
-                    ? "bg-primary text-white"
-                    : "bg-gray-200 text-foreground"
+                    ? "bg-gray-100 text-foreground ring-1 ring-border"
+                    : "bg-gray-50 text-muted-foreground ring-1 ring-border"
                 }`}
               >
                 Image URL
@@ -166,8 +166,8 @@ export default function ArticlePostModal({ isOpen, onClose, onSubmit, editingArt
                 onClick={() => setCoverImageInputType("file")}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   coverImageInputType === "file"
-                    ? "bg-primary text-white"
-                    : "bg-gray-200 text-foreground"
+                    ? "bg-gray-100 text-foreground ring-1 ring-border"
+                    : "bg-gray-50 text-muted-foreground ring-1 ring-border"
                 }`}
               >
                 Upload File

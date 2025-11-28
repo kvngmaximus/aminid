@@ -142,7 +142,7 @@ export default function Index() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup">
+              <Link to="/articles">
                 <Button size="lg" className="group">
                   Start Reading <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
                 </Button>

@@ -143,6 +143,9 @@ export default function AuthorDashboard() {
               <Plus size={16} />
               New Course
             </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/account/subscriptions") }>
+              <Heart size={18} />
+            </Button>
             <Button variant="ghost" size="sm">
               <Settings size={18} />
             </Button>
@@ -282,7 +285,7 @@ export default function AuthorDashboard() {
                         <span>{course.students} enrolled</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="font-semibold text-foreground">${course.price}</span>
+                        <span className="font-semibold text-foreground">₦{Number(course.price || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-accent font-semibold">{course.rating}★</span>
@@ -350,16 +353,16 @@ export default function AuthorDashboard() {
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-primary to-accent text-white rounded-xl p-8">
                 <p className="text-white/80 mb-2">Total Earnings</p>
-                <p className="text-4xl font-poppins font-bold">$1,245.50</p>
+                <p className="text-4xl font-poppins font-bold">₦1,245.50</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-xl p-6 border border-border">
                   <p className="text-muted-foreground text-sm mb-2">This Month</p>
-                  <p className="text-2xl font-poppins font-bold text-primary">$345.00</p>
+                  <p className="text-2xl font-poppins font-bold text-primary">₦345.00</p>
                 </div>
                 <div className="bg-white rounded-xl p-6 border border-border">
                   <p className="text-muted-foreground text-sm mb-2">Pending Payout</p>
-                  <p className="text-2xl font-poppins font-bold text-accent">$125.50</p>
+                  <p className="text-2xl font-poppins font-bold text-accent">₦125.50</p>
                 </div>
               </div>
               <Button size="lg" className="w-full">
