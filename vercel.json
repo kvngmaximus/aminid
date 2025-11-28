@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist/spa" }
+    }
+  ],
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm run build",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "redirects": [
+    {
+      "source": "/account/subscriptions",
+      "destination": "/dashboard/reader/subscriptions",
+      "permanent": false
+    }
+  ]
+}
