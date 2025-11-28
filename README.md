@@ -77,7 +77,7 @@ import { api } from "@shared/api";
 
 ## Environment Variables
 
-Place env values in `.env`. The Vite dev server denies serving `.env` files directly for safety. Access env values via standard mechanisms (`import.meta.env` on the client; `process.env` on the server/build).
+env values in `.env`. The Vite dev server denies serving `.env` files directly for safety. Access env values via standard mechanisms (`import.meta.env` on the client; `process.env` on the server/build).
 
 ## Testing
 
@@ -115,14 +115,3 @@ npm start
 
 - Static hosting (SPA) can serve `dist/spa`. For server routes, deploy the server build or use serverless functions.
 - Netlify example function: `netlify/functions/api.ts`. Configure in `netlify.toml` if deploying functions.
-
-## Contributing
-
-1. Fork and clone
-2. Create a feature branch
-3. Run `npm run dev` and `npm test`
-4. Submit a PR
-
-## License
-
-Proprietary or custom — add your preferred license terms here.
