@@ -9,9 +9,8 @@
   ],
   "installCommand": "pnpm install",
   "buildCommand": "pnpm run build",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "redirects": [
     {
